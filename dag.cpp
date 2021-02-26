@@ -1,7 +1,7 @@
 /*
- *  This is a test cpp file to test DAG-related operation
- * 
- * 
+ * Author： Liwei Ni <nlwmode@gmail.com> 
+ * Datatime: 2021/02/26
+ * This is a test cpp file to test DAG-related operation
  */
 
 #include <iostream>
@@ -53,7 +53,7 @@ namespace nlwmode_Test{
              */
             void creageGraph(int size_vertex , int size_edge);
             void DFS();
-            void DFS(T v);
+            void DFS(int pos);
             void BFS();
 
             // AOV与AOE网络的相关操作
@@ -338,9 +338,10 @@ namespace nlwmode_Test{
     
     }
 
-/****************************************************************************/
-/*****************          for test                    *********************/
-/****************************************************************************/
+    /****************************************************************************/
+    /*****************          for test                    *********************/
+    /****************************************************************************/
+
     /**
      * @brief 获取 pos1 顶点的邻接点 pos2 的邻接点
      */
@@ -365,6 +366,116 @@ namespace nlwmode_Test{
                 std::cerr << "Error occur when insertEdge at: (" << tmp_val1 << " , " << tmp_val2 << ")" << endl;
         }
     }
-    
+
+
+    /**
+     * @brief 以链表形式输出graph
+     */    
+    template<class T , class E>
+    void Graph<T, E>::print()
+    {
+        std::cout << "This is the information of the graph:" << std::endl;
+        for(int i = 0 ; i < _numOfVertices ; ++i)
+        {
+            std::cout << "Vertex " << i << " : val = " << _adjacency_list[i].vertex_val 
+                                   << " , indegree = " << _adjacency_list[i].vertex_indedgree << " --> ";
+            Edge<T, E> *p = _adjacency_list[i].vertex_next;
+            while(p)
+            {
+                std::cout  << p->edge_dest_pos << " ( val = " << _adjacency_list[p->edge_dest_pos].vertex_val 
+                                            << " , weight = " << p->edge_weight << ")";
+                p = p->edge_link;
+                if(p)
+                    std::cout << " --> " << std::endl;
+            }
+            std::cout << std::endl;
+        }
+    }
+
+    /**
+     * @brief 深度优先遍历
+     */    
+    template<class T , class E>
+    void Graph<T, E>::DFS()
+    {
+        for(int i = 0 ; i < _numOfVertices ; ++i)
+            _visited[i] = 0;
+        for(int i = 0 ; i < _numOfVertices ; ++i)
+        {
+            // @TODO 这里应该使用 stack 辅助数据结构来DFS
+            if(!_visited[i])
+                DFS(i);
+        }
+    }
+
+    /**
+     * @brief 
+     */    
+    template<class T , class E>
+    void Graph<T, E>::DFS(int pos)
+    {
+        _visited[pos] = 1;
+        /* do-something  */
+        Edge<T, E> *p = getFirstNeighbor(pos);
+        while(p)
+        {
+            int dest = p->edge_dest_pos;
+            if(!_visited[dest])
+                DFS(dest);
+            p = getNextNeighbor(pos , p->edge_dest_pos);
+        }
+        // 这里应该对_visted复原吧
+        // _visited[pos] = 0;
+    }
+
+    /**
+     * @brief 
+     */    
+    template<class T , class E>
+    void Graph<T, E>::BFS()
+    {
+        for(int i = 0 ; i < _numOfVertices ; ++i)
+            _visited[i] = 0;
+        // @TODO 这里应该使用 queue 辅助结构来进行BFS
+        int seq[DEFAULT_CAPACITY + 10] ;
+        int front = -1 , rear = -1;
+        for(int i = 0 ; i < _numOfVertices ; ++i)
+        {
+            if(!_visited[i])
+            {
+                _visited[i] = 1;
+                /* do-something  */
+                ++rear;
+                seq[rear] = i;
+                while(front != rear)
+                {
+                    ++front;
+                    int tmp_pos = seq[front];
+                    Edge<T, E> *p = getFirstNeighbor(tmp_pos);
+                    while(p)
+                    {
+                        int dest = p->edge_dest_pos;
+                        if( !_visited[dest] )
+                        {
+                            _visited[dest] = 1;
+                            /* do-something  */
+                            ++rear;
+                            seq[rear] = dest;
+                        }
+                        p = getNextNeighbor(tmp_pos , dest);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * @brief AOV: 有向图无回路，也就是 DAG 的拓扑排序
+     */    
+    template<class T , class E> 
+    bool Graph<T, E> AOV_TopoSort()
+    {
+        return true;
+    }
 
 };
