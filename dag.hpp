@@ -64,7 +64,7 @@ namespace nlwmode_Test{
              * 顶点的相关操作
              */
             bool insertVertex(const T& val);
-            bool removeVertex(cosnt int pos , T val);
+            bool removeVertex(const int pos , T val);
 
             /**
              * 边的相关操作 
@@ -74,7 +74,7 @@ namespace nlwmode_Test{
             bool removeEdge(const T p1 , const T p2);
             E getWeight(const int& v1 , const int& v2);
             Edge<T, E>* getFirstNeighbor(const T pos);
-            Edge<T, E>* getNextNeighbor(const T& v1 , const& v2);
+            Edge<T, E>* getNextNeighbor(const T& v1 , const T& v2);
 
             /**
              * 一些其他的操作
@@ -139,7 +139,7 @@ namespace nlwmode_Test{
      * @brief 
      */
     template<class T , class E>
-    bool Graph<T, E>::removeVertex(cosnt int pos , T val)
+    bool Graph<T, E>::removeVertex(const int pos , T val)
     {
         bool res = true;
         if(pos < 0 || pos >= _capacity ) res = false;
@@ -324,7 +324,7 @@ namespace nlwmode_Test{
      * @brief 获取 pos1 顶点的邻接点 pos2 的邻接点
      */
     template<class T , class E>
-    Edge<T, E>* Graph<T, E>::getNextNeighbor(const T pos1 ,const T pos2 )
+    Edge<T, E>* Graph<T, E>::getNextNeighbor(const T& pos1 ,const T& pos2 )
     {
         Edge<T, E> *res = nullptr;
         if(pos1 < 0 || pos1 >= _numOfVertices || pos2 < 0 || pos2 >= _numOfVertices ) res = nullptr;
@@ -352,18 +352,18 @@ namespace nlwmode_Test{
         std::cout << "Please input vertices:" << std::endl;
         for(int i = 0 ; i < size_vertex ; ++i)
         {
-            cin >> tmp_val;
+            std::cin >> tmp_val;
             if( !insertVertex(tmp_val) )
-                std::cerr << "Error occur when insertVertex : " << tmp_val << endl;
+                std::cerr << "Error occur when insertVertex : " << tmp_val << std::endl;
         }
         std::cout << "Please input edges:" << std::endl;
         T tmp_val1 , tmp_val2;
         E tmp_weight;
         for(int k = 1 ; k < size_edge ; ++k)
         {
-            cin >> tmp_val1 >> tmp_val2 >> tmp_weight;
+            std::cin >> tmp_val1 >> tmp_val2 >> tmp_weight;
             if( !insertEdge(tmp_val1 , tmp_val2 , tmp_weight) )
-                std::cerr << "Error occur when insertEdge at: (" << tmp_val1 << " , " << tmp_val2 << ")" << endl;
+                std::cerr << "Error occur when insertEdge at: (" << tmp_val1 << " , " << tmp_val2 << ")" << std::endl;
         }
     }
 
@@ -471,11 +471,106 @@ namespace nlwmode_Test{
 
     /**
      * @brief AOV: 有向图无回路，也就是 DAG 的拓扑排序
+     *        for LUT mapping
      */    
     template<class T , class E> 
-    bool Graph<T, E> AOV_TopoSort()
+    bool Graph<T, E>::AOV_TopoSort()
     {
-        return true;
+        int count = 0;
+        int tmp_stack[DEFAULT_CAPACITY], top = -1;
+        for(int i = 0 ; i < _numOfVertices ; ++i)
+        {
+            if( _adjacency_list[i].vertex_indedgree == 0 )
+                tmp_stack[++top] = i;
+        }
+        while( top != -1)
+        {
+            int tmp_pos = tmp_stack[top--];
+            /* do-something  */
+            ++count;
+            Edge<T, E> *p = _adjacency_list[tmp_pos].vertex_next;
+            while(p)
+            {
+                int tmp_dest = p->edge_dest_pos;
+                if( _adjacency_list[tmp_dest].vertex_indedgree == 1 )
+                    tmp_stack[++top] = tmp_dest;
+                p = p->edge_link;
+            }
+        }
+        if(count < _numOfVertices)
+        {
+            std::cerr << "RESULT: fail, there are some circles in this graph!" << std::endl;
+            return false;
+        }
+        else
+        {
+            std::cout << " RESULT: ok, a good AOV graph!" << std::endl;
+            return true;
+        }
+            
+    }
+    /**
+     * @brief AOE网络及关键路径算法（AOE为带权值的AOV网络）
+     *        从起点到终点具有最大路径长度的路径为关键路径
+     *        for CTS
+     */
+    template <class T, class E>
+    void Graph<T, E>::AOE_CritivalPath()
+    {
+        int *ve = new int[DEFAULT_CAPACITY] , *vl = new int[DEFAULT_CAPACITY];
+        for(int i = 0 ; i < _numOfVertices ; ++i)   ve[i] = 0;
+        
+        for(int i = 0 ; i < _numOfVertices ; ++i)
+        {
+            Edge<T, E> *p = _adjacency_list[i].vertex_next;
+            while(p)
+            {
+                int tmp_dest = p->edge_dest_pos;
+                if(ve[i] + p->edge_weight > ve[tmp_dest])
+                    ve[tmp_dest] = ve[i] + p->edge_weight;
+                p = p->edge_link;
+            }
+        }
+        
+        // output the result
+        std::cout << "ve:" << std::endl;
+        for(int i = 0 ; i < _numOfVertices ; ++i)
+            std::cout << ve[i] << std::endl;
+        for(int i = 0 ; i < _numOfVertices ; ++i)
+            vl[i] = ve[i];
+        for(int i = _numOfVertices - 1 ; i > -1 ; --i)
+        {
+            E tmp_gap = 0;
+            Edge<T, E> *p = _adjacency_list[i].vertex_next;
+            if(p)
+                tmp_gap = vl[p->dest] - p->cost;
+            while (p)
+            {
+                int tmp_dest = p->dest;
+                if( !(tmp_gap < (vl[tmp_dest] - p->edge_weight)) )
+                {
+                    tmp_gap = vl[tmp_dest] - p->edge_weight;
+                    vl[i] = tmp_gap;
+                }
+                p = p->edge_link;
+            }
+        }
+
+        std::cout << "vl:" << std::endl;
+        for(int i = 0 ; i < _numOfVertices ; ++i)
+            std::cout << vl[i] << std::endl;
+        for(int i = 0 ; i < _numOfVertices ; ++i)
+        {
+            Edge<T, E> *p = _adjacency_list[i].vertex_next;
+            while (p)
+            {
+                int tmp_dest = p->dest;
+                int e = ve[i] , l = vl[tmp_dest] - p->edge_weight;
+                if( e == l)
+                    std::cout << "<" << _adjacency_list[i].vertax_val << "," << _adjacency_list[tmp_dest].vertax_val << "> a critical path step" << std::endl;
+            }
+            p = p->edge_link;
+        }
     }
 
 };
