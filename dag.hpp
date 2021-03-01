@@ -42,9 +42,9 @@ namespace nlwmode_Test{
     template<class T , class E>
     class Graph{
         public:
-            Graph(int isDirected = 1, int capacity = DEFAULT_CAPACITY){}
+            Graph(int isDirected = 1, int capacity = DEFAULT_CAPACITY);
             //@TODO 增加一个深拷贝的构造函数
-            ~Graph(){}
+            ~Graph();
             int getNumberOfVertices(){ return _numOfEdges; };
             int getNumberOfEdges(){ return _numOfVertices; };
 
@@ -101,7 +101,7 @@ namespace nlwmode_Test{
         _numOfVertices = 0;
         _numOfEdges = 0;
         _adjacency_list = new Vertex<T, E>[capacity];
-        _visited = nullptr;
+        //_visited = nullptr;
     }
 
     template<class T , class E>
@@ -112,7 +112,7 @@ namespace nlwmode_Test{
         _numOfEdges = 0;
         _capacity = 0;
         delete _adjacency_list;
-        delete[] _visited;
+        //delete[] _visited;
     }
 
     /**
